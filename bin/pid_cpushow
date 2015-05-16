@@ -1,0 +1,38 @@
+#!/bin/bash
+
+PIDFILE=$HOME/tmp/cpushow.pid
+LOGFILE="/tmp/cpushow.log"
+
+
+pushd ~/dev/pidisplay/cpu_show/ > /dev/null 2>&1
+source /home/pi/.bashrc
+
+START=0
+if [ -e "$PIDFILE" ]; then
+    PID="$(cat $PIDFILE)"
+    if ! ps -p $PID > /dev/null ; then
+        # last process is not around
+        echo "Clean up from last process [$PID]"
+        rm $PIDFILE
+        START=1
+    else
+        echo -n '.'
+    fi
+else
+    START=1
+fi
+
+if [ "$(pidof -x cpushow)" ]; then
+    START=0
+fi
+
+if [ $START -eq 1 ]; then
+    echo "-------------"
+    echo " $(date) : $(date +%s)"
+    echo "# $(date) | $(date +%s_%Y.%m.%d)" >> $LOGFILE
+    sudo ./cpushow >> $LOGFILE 2>&1 &
+    echo $! > $PIDFILE
+    echo "RUNNING!"
+fi
+
+popd > /dev/null 2>&1
